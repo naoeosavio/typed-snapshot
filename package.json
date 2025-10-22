@@ -1,6 +1,6 @@
 {
   "name": "typed-snapshot",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Generate typed TypeScript snapshots (const/enum/union) to file.",
   "type": "module",
   "main": "dist/index.cjs",
@@ -13,19 +13,30 @@
       "require": "./dist/index.cjs"
     }
   },
-  "files": [
-    "dist"
-  ],
-  "scripts": {
-    "build": "tsc -p tsconfig.json && node -e \"const fs=require('fs');fs.copyFileSync('dist/index.js','dist/index.cjs');\""
+  "bugs": {
+    "url": "https://github.com/naoeosavio/typed-snapshot/issues"
   },
-  "keywords": [
-    "typescript",
-    "codegen",
-    "snapshot",
-    "enum",
-    "union"
-  ],
-  "license": "UNLICENSED"
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/naoeosavio/typed-snapshot.git"
+  },
+  "author": "it is not savio",
+  "keywords": ["typescript", "codegen", "snapshot", "enum", "union"],
+  "license": "MIT",
+  "files": ["dist"],
+  "scripts": {
+    "build": "tsup",
+    "dev": "tsup --watch",
+    "lint": "tsc",
+    "format": "biome check --write src",
+    "check": "biome check src",
+    "ci": "npm run lint && npm run check && npm run build",
+    "prepublishOnly": "npm run build"
+  },
+  "devDependencies": {
+    "@biomejs/biome": "2.2.6",
+    "@types/node": "24.9.1",
+    "tsup": "^8.0.1",
+    "typescript": "^5.4.0"
+  }
 }
-
