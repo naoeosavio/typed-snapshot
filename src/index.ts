@@ -1,6 +1,7 @@
-import { existsSync, mkdirSync } from "fs";
-import { writeFile } from "fs/promises";
-import { dirname } from "path";
+import { existsSync, mkdirSync } from "node:fs";
+import { writeFile } from "node:fs/promises";
+import { dirname } from "node:path";
+
 import type { WriteTypedVariableOptions } from "./types";
 
 /**
@@ -36,7 +37,7 @@ export async function writeTypedVariableToFile(
     mkdirSync(dir, { recursive: true });
   }
 
-  const parts: string[] = ["// Auto-generated file – DO NOT EDIT"]; 
+  const parts: string[] = ["// Auto-generated file – DO NOT EDIT"];
   if (includeTimestamp) {
     parts.push(`// Last updated: ${new Date().toISOString()}`);
   }
@@ -56,11 +57,13 @@ export async function writeTypedVariableToFile(
       );
     }
   } else {
-    parts.push(emitTypedConst(variableName, type, JSON.stringify(data, null, 2)));
+    parts.push(
+      emitTypedConst(variableName, type, JSON.stringify(data, null, 2)),
+    );
   }
 
   // Always end with trailing newline for POSIX friendliness
-  const content = parts.join("\n") + "\n";
+  const content = `${parts.join("\n")}\n`;
   await writeFile(outputPath, content);
 }
 
@@ -69,7 +72,10 @@ function emitTypedConst(name: string, type: string, value: string): string {
 }
 
 /** Convert an array of primitives to a TypeScript enum. */
-export function generateEnumFromArray(data: any[], enumName: string): string {
+export function generateEnumFromArray(
+  data: unknown[],
+  enumName: string,
+): string {
   const valid = (v: unknown) =>
     (typeof v === "string" && /^[a-zA-Z_$][a-zA-Z0-9_$]*$/.test(v)) ||
     typeof v === "number";
@@ -80,7 +86,7 @@ export function generateEnumFromArray(data: any[], enumName: string): string {
     return `export const ${enumName} = ${JSON.stringify(data, null, 2)};`;
   }
 
-  const entries = filtered.map(v => {
+  const entries = filtered.map((v) => {
     const key = typeof v === "string" ? v : `VALUE_${v}`;
     const value = typeof v === "string" ? `'${v.replace(/'/g, "\\'")}'` : v;
     return `  ${key} = ${value}`;
@@ -90,7 +96,10 @@ export function generateEnumFromArray(data: any[], enumName: string): string {
 }
 
 /** Convert an array of primitives to a union of literal types. */
-export function generateTypeFromArray(data: any[], typeName: string): string {
+export function generateTypeFromArray(
+  data: unknown[],
+  typeName: string,
+): string {
   const valid = (v: unknown) => typeof v === "string" || typeof v === "number";
   const filtered = data.filter(valid);
 
@@ -100,10 +109,9 @@ export function generateTypeFromArray(data: any[], typeName: string): string {
   }
 
   const union = filtered
-    .map(v => (typeof v === "string" ? `'${v.replace(/'/g, "\\'")}'` : v))
+    .map((v) => (typeof v === "string" ? `'${v.replace(/'/g, "\\'")}'` : v))
     .join(" | ");
   return `export type ${typeName} = ${union};`;
 }
 
-export type { WriteTypedVariableOptions, TypeFormat } from "./types";
-
+export type { TypeFormat, WriteTypedVariableOptions } from "./types";

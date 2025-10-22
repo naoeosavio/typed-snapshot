@@ -4,7 +4,7 @@ export type WriteTypedVariableOptions = {
   /** TypeScript type to assign to the exported constant (e.g. "MyType" or "string") */
   type: string;
   /** Data that will be serialised to the file */
-  data: any;
+  data: unknown;
   /** Name of the constant / enum / type to export */
   variableName: string;
   /** Output file path (relative or absolute) */
@@ -18,4 +18,3 @@ export type WriteTypedVariableOptions = {
   /** How to emit arrays: plain const, enum, or union type */
   typeFormat?: TypeFormat;
 };
-
