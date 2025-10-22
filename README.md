@@ -68,3 +68,14 @@ Helpers are also exported: `generateEnumFromArray`, `generateTypeFromArray`.
 - The library has zero runtime dependencies. Build with `tsc`.
 - For `enum` mode, string values must be valid TypeScript identifiers to become keys; otherwise the file falls back to exporting a const array.
 
+## Contributing
+
+1. Fork the repository.
+2. Create a new branch: `git checkout -b feature-name`.
+3. Commit your changes: `git commit -m 'Add some feature'`.
+4. Push to the branch: `git push origin feature-name`.
+5. Open a pull request.
+
+## License
+
+Distributed under the MIT License. See the [LICENSE](LICENSE) file for more details.
