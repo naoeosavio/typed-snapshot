@@ -1,0 +1,31 @@
+{
+  "name": "typed-snapshot",
+  "version": "0.1.0",
+  "description": "Generate typed TypeScript snapshots (const/enum/union) to file.",
+  "type": "module",
+  "main": "dist/index.cjs",
+  "module": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "require": "./dist/index.cjs"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsc -p tsconfig.json && node -e \"const fs=require('fs');fs.copyFileSync('dist/index.js','dist/index.cjs');\""
+  },
+  "keywords": [
+    "typescript",
+    "codegen",
+    "snapshot",
+    "enum",
+    "union"
+  ],
+  "license": "UNLICENSED"
+}
+
