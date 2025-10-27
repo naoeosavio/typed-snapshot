@@ -32,7 +32,7 @@
     "format": "biome check --write src",
     "check": "biome check src",
     "ci": "npm run lint && npm run check && npm run build",
-    "prepublishOnly": "npm run build"
+    "prepublishOnly": "npm run ci"
   },
   "devDependencies": {
     "@biomejs/biome": "2.2.6",
