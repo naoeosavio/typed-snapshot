@@ -10,7 +10,7 @@ import type { WriteTypedVariableOptions } from "./types";
  * - Optionally imports a type via `import type { T } from '...'`
  * - For arrays, supports emitting `enum` or `type` unions
  */
-export async function writeTypedVariableToFile(
+export function writeTypedVariableToFile(
   options: WriteTypedVariableOptions,
 ): Promise<void> {
   const {
@@ -66,7 +66,8 @@ export async function writeTypedVariableToFile(
 
   // Always end with trailing newline for POSIX friendliness
   const content = `${parts.join("\n")}\n`;
-  await writeFile(outputPath, content);
+  writeFile(outputPath, content);
+  return Promise.resolve();
 }
 
 function emitTypedConst(name: string, type: string, value: string): string {
