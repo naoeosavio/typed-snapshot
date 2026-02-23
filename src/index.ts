@@ -51,6 +51,8 @@ export async function writeTypedVariableToFile(
       parts.push(generateEnumFromArray(data, variableName));
     } else if (typeFormat === "type") {
       parts.push(generateTypeFromArray(data, variableName));
+    } else if (typeFormat === "asconst") {
+      parts.push(generateAsConstFromArray(data, variableName));
     } else {
       parts.push(
         emitTypedConst(variableName, type, JSON.stringify(data, null, 2)),
@@ -114,4 +116,34 @@ export function generateTypeFromArray(
   return `export type ${typeName} = ${union};`;
 }
 
+/** Convert an array to an object with const assertion. */
+export function generateAsConstFromArray(
+  data: unknown[],
+  variableName: string,
+): string {
+  const entries: string[] = [];
+
+  data.forEach((item, index) => {
+    let key: string;
+    let value: string;
+
+    if (typeof item === "string" && /^[a-zA-Z_$][a-zA-Z0-9_$]*$/.test(item)) {
+      key = item;
+      value = `'${item.replace(/'/g, "\\'")}'`;
+    } else if (typeof item === "string") {
+      key = `ITEM_${index}`;
+      value = `'${item.replace(/'/g, "\\'")}'`;
+    } else if (typeof item === "number") {
+      key = `VALUE_${item}`;
+      value = String(item);
+    } else {
+      key = `ITEM_${index}`;
+      value = JSON.stringify(item);
+    }
+
+    entries.push(`  ${key}: ${value}`);
+  });
+
+  return `export const ${variableName} = {\n${entries.join(",\n")}\n} as const;`;
+}
 export type { TypeFormat, WriteTypedVariableOptions } from "./types";

@@ -1,4 +1,4 @@
-export type TypeFormat = "plain" | "enum" | "type";
+export type TypeFormat = "plain" | "enum" | "type" | "asconst";
 
 export type WriteTypedVariableOptions = {
   /** TypeScript type to assign to the exported constant (e.g. "MyType" or "string") */
