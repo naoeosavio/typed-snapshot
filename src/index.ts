@@ -53,6 +53,8 @@ export function writeTypedVariableToFile(
       parts.push(generateTypeFromArray(data, variableName));
     } else if (typeFormat === "asconst") {
       parts.push(generateAsConstFromArray(data, variableName));
+    } else if (typeFormat === "interface") {
+      parts.push(generateInterfaceFromArray(data, variableName));
     } else {
       parts.push(
         emitTypedConst(variableName, type, JSON.stringify(data, null, 2)),
@@ -147,4 +149,36 @@ export function generateAsConstFromArray(
 
   return `export const ${variableName} = {\n${entries.join(",\n")}\n} as const;`;
 }
+
+/** Convert an array to a TypeScript interface. */
+export function generateInterfaceFromArray(
+  data: unknown[],
+  interfaceName: string,
+): string {
+  const entries: string[] = [];
+
+  data.forEach((item, index) => {
+    let key: string;
+    let value: string;
+
+    if (typeof item === "string" && /^[a-zA-Z_$][a-zA-Z0-9_$]*$/.test(item)) {
+      key = item;
+      value = `'${item.replace(/'/g, "\\'")}'`;
+    } else if (typeof item === "string") {
+      key = `ITEM_${index}`;
+      value = `'${item.replace(/'/g, "\\'")}'`;
+    } else if (typeof item === "number") {
+      key = `VALUE_${item}`;
+      value = String(item);
+    } else {
+      key = `ITEM_${index}`;
+      value = JSON.stringify(item);
+    }
+
+    entries.push(`  ${key}: ${value};`);
+  });
+
+  return `export interface ${interfaceName} {\n${entries.join("\n")}\n}`;
+}
+
 export type { TypeFormat, WriteTypedVariableOptions } from "./types";
