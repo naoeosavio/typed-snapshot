@@ -2,7 +2,7 @@ import { existsSync, mkdirSync } from "node:fs";
 import { writeFile } from "node:fs/promises";
 import { dirname } from "node:path";
 
-import type { WriteTypedVariableOptions } from "./types";
+import type { TypeFormat, WriteTypedVariableOptions } from "./types";
 
 /**
  * Generate a TypeScript file exporting a typed constant, enum, or union type.
@@ -10,6 +10,57 @@ import type { WriteTypedVariableOptions } from "./types";
  * - Optionally imports a type via `import type { T } from '...'`
  * - For arrays, supports emitting `enum` or `type` unions
  */
+function generateContent(
+  type: string,
+  data: unknown,
+  variableName: string,
+  importPath?: string,
+  importTypeName?: string,
+  includeTimestamp: boolean = true,
+  typeFormat: TypeFormat = "plain",
+): string {
+  const parts: string[] = ["// Auto-generated file – DO NOT EDIT"];
+
+  if (includeTimestamp) {
+    parts.push(`// Last updated: ${new Date().toISOString()}`);
+  }
+
+  if (importPath && importTypeName) {
+    parts.push(`import type { ${importTypeName} } from '${importPath}';`);
+  }
+
+  const isArray = Array.isArray(data);
+  if (isArray && typeFormat !== "plain") {
+    parts.push(generateArrayContent(data, variableName, typeFormat, type));
+  } else {
+    parts.push(
+      emitTypedConst(variableName, type, JSON.stringify(data, null, 2)),
+    );
+  }
+
+  return `${parts.join("\n")}\n`;
+}
+
+function generateArrayContent(
+  data: unknown[],
+  variableName: string,
+  typeFormat: TypeFormat,
+  type: string,
+): string {
+  switch (typeFormat) {
+    case "enum":
+      return generateEnumFromArray(data, variableName);
+    case "type":
+      return generateTypeFromArray(data, variableName);
+    case "asconst":
+      return generateAsConstFromArray(data, variableName);
+    case "interface":
+      return generateInterfaceFromArray(data, variableName);
+    default:
+      return emitTypedConst(variableName, type, JSON.stringify(data, null, 2));
+  }
+}
+
 export function writeTypedVariableToFile(
   options: WriteTypedVariableOptions,
 ): Promise<void> {
@@ -37,39 +88,17 @@ export function writeTypedVariableToFile(
     mkdirSync(dir, { recursive: true });
   }
 
-  const parts: string[] = ["// Auto-generated file – DO NOT EDIT"];
-  if (includeTimestamp) {
-    parts.push(`// Last updated: ${new Date().toISOString()}`);
-  }
-  if (importPath && importTypeName) {
-    parts.push(`import type { ${importTypeName} } from '${importPath}';`);
-  }
+  const content = generateContent(
+    type,
+    data,
+    variableName,
+    importPath,
+    importTypeName,
+    includeTimestamp,
+    typeFormat,
+  );
 
-  const isArray = Array.isArray(data);
-  if (isArray && typeFormat !== "plain") {
-    if (typeFormat === "enum") {
-      parts.push(generateEnumFromArray(data, variableName));
-    } else if (typeFormat === "type") {
-      parts.push(generateTypeFromArray(data, variableName));
-    } else if (typeFormat === "asconst") {
-      parts.push(generateAsConstFromArray(data, variableName));
-    } else if (typeFormat === "interface") {
-      parts.push(generateInterfaceFromArray(data, variableName));
-    } else {
-      parts.push(
-        emitTypedConst(variableName, type, JSON.stringify(data, null, 2)),
-      );
-    }
-  } else {
-    parts.push(
-      emitTypedConst(variableName, type, JSON.stringify(data, null, 2)),
-    );
-  }
-
-  // Always end with trailing newline for POSIX friendliness
-  const content = `${parts.join("\n")}\n`;
-  writeFile(outputPath, content);
-  return Promise.resolve();
+  return writeFile(outputPath, content);
 }
 
 function emitTypedConst(name: string, type: string, value: string): string {
