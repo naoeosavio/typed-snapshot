@@ -1,6 +1,6 @@
 # typed-snapshot
 
-Generate typed TypeScript snapshots to disk — as a constant, an enum, or a union type — with optional `import type` headers and timestamps.
+Generate typed TypeScript snapshots to disk — as a constant, an enum, a union type, an `as const` object, or an interface — with optional `import type` headers and timestamps.
 
 ## Install
 
@@ -50,6 +50,50 @@ await writeTypedVariableToFile({
 });
 ```
 
+### Arrays → as const object
+
+```ts
+await writeTypedVariableToFile({
+  type: 'never', // ignored for asconst emission
+  data: ['BNB', 'BTC', 'USDT', 'ETH'],
+  variableName: 'Token',
+  outputPath: './data/Token.ts',
+  typeFormat: 'asconst',
+});
+```
+
+Generates:
+```typescript
+export const Token = {
+  BNB: 'BNB',
+  BTC: 'BTC',
+  USDT: 'USDT',
+  ETH: 'ETH',
+} as const;
+```
+
+### Arrays → interface
+
+```ts
+await writeTypedVariableToFile({
+  type: 'never', // ignored for interface emission
+  data: ['BNB', 'BTC', 'USDT', 'ETH'],
+  variableName: 'TokenData',
+  outputPath: './data/TokenData.ts',
+  typeFormat: 'interface',
+});
+```
+
+Generates:
+```typescript
+export interface TokenData {
+  BNB: 'BNB';
+  BTC: 'BTC';
+  USDT: 'USDT';
+  ETH: 'ETH';
+}
+```
+
 ## API
 
 - `writeTypedVariableToFile(options): Promise<void>`
@@ -59,14 +103,18 @@ await writeTypedVariableToFile({
   - `outputPath`: string — file path to write
   - `importPath?`, `importTypeName?` — optional `import type` header
   - `includeTimestamp?` (default true)
-  - `typeFormat?`: `'plain' | 'enum' | 'type'`
+  - `typeFormat?`: `'plain' | 'enum' | 'type' | 'asconst' | 'interface'`
 
-Helpers are also exported: `generateEnumFromArray`, `generateTypeFromArray`.
+Helpers are also exported: `generateEnumFromArray`, `generateTypeFromArray`, `generateAsConstFromArray`, `generateInterfaceFromArray`.
 
 ## Notes
 
 - The library has zero runtime dependencies. Build with `tsc`.
 - For `enum` mode, string values must be valid TypeScript identifiers to become keys; otherwise the file falls back to exporting a const array.
+- For `asconst` and `interface` modes:
+  - String values that are valid TypeScript identifiers use the value as the property key
+  - Invalid identifiers use `ITEM_${index}` as the property key
+  - Number values use `VALUE_${number}` as the property key
 
 ## Contributing
 
