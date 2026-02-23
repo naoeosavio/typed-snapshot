@@ -5,35 +5,6 @@ import { dirname } from "node:path";
 import type { TypeFormat, WriteTypedVariableOptions } from "./types";
 
 /**
- * Generate and write a TypeScript file with typed exports.
- *
- * This function creates a TypeScript file containing typed constants, enums,
- * union types, `as const` objects, or interfaces based on the provided data.
- *
- * @param options - Configuration options for file generation
- * @param options.type - TypeScript type annotation for the exported constant
- * @param options.data - Data to serialize to the file
- * @param options.variableName - Name of the constant/enum/type/interface to export
- * @param options.outputPath - File path where the TypeScript file will be written
- * @param options.importPath - Optional path for type imports
- * @param options.importTypeName - Optional type name to import
- * @param options.includeTimestamp - Whether to include a timestamp comment (default: true)
- * @param options.typeFormat - Format for array data: 'plain', 'enum', 'type', 'asconst', or 'interface' (default: 'plain')
- *
- * @returns A Promise that resolves when the file has been written
- *
- * @example
- * ```typescript
- * await writeTypedVariableToFile({
- *   type: '{ base: string; total: number }',
- *   data: { base: 'USDT', total: 123.4567 },
- *   variableName: 'PORTFOLIO_SALDO',
- *   outputPath: './data/portfolio_saldo.ts',
- *   includeTimestamp: true,
- * });
- * ```
- */
-/**
  * Generate the complete TypeScript file content.
  *
  * @param type - TypeScript type annotation
@@ -105,6 +76,35 @@ function generateArrayContent(
   }
 }
 
+/**
+ * Generate and write a TypeScript file with typed exports.
+ *
+ * This function creates a TypeScript file containing typed constants, enums,
+ * union types, `as const` objects, or interfaces based on the provided data.
+ *
+ * @param options - Configuration options for file generation
+ * @param options.type - TypeScript type annotation for the exported constant
+ * @param options.data - Data to serialize to the file
+ * @param options.variableName - Name of the constant/enum/type/interface to export
+ * @param options.outputPath - File path where the TypeScript file will be written
+ * @param options.importPath - Optional path for type imports
+ * @param options.importTypeName - Optional type name to import
+ * @param options.includeTimestamp - Whether to include a timestamp comment (default: true)
+ * @param options.typeFormat - Format for array data: 'plain', 'enum', 'type', 'asconst', or 'interface' (default: 'plain')
+ *
+ * @returns A Promise that resolves when the file has been written
+ *
+ * @example
+ * ```typescript
+ * await writeTypedVariableToFile({
+ *   type: '{ base: string; total: number }',
+ *   data: { base: 'USDT', total: 123.4567 },
+ *   variableName: 'PORTFOLIO_SALDO',
+ *   outputPath: './data/portfolio_saldo.ts',
+ *   includeTimestamp: true,
+ * });
+ * ```
+ */
 export function writeTypedVariableToFile(
   options: WriteTypedVariableOptions,
 ): Promise<void> {
