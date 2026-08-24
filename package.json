@@ -1,6 +1,6 @@
 {
   "name": "typed-snapshot",
-  "version": "0.3.0",
+  "version": "0.4.0",
   "description": "Generate typed TypeScript snapshots (const/enum/union) to file.",
   "type": "module",
   "main": "dist/index.cjs",
@@ -22,9 +22,17 @@
     "url": "https://github.com/naoeosavio/typed-snapshot.git"
   },
   "author": "it is not savio",
-  "keywords": ["typescript", "codegen", "snapshot", "enum", "union"],
+  "keywords": [
+    "typescript",
+    "codegen",
+    "snapshot",
+    "enum",
+    "union"
+  ],
   "license": "MIT",
-  "files": ["dist"],
+  "files": [
+    "dist"
+  ],
   "scripts": {
     "build": "tsup",
     "dev": "tsup --watch",
@@ -39,5 +47,8 @@
     "@types/node": "24.9.1",
     "tsup": "^8.0.1",
     "typescript": "^5.4.5"
+  },
+  "dependencies": {
+    "lite-fp": "^0.8.1"
   }
 }
