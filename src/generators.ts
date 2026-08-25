@@ -1,8 +1,24 @@
 import { done, fail, Result } from "lite-fp";
 
 import type { GenerationError } from "./errors";
+import type { TypeFormat } from "./types";
+
+/**
+ * Import header required by files generated in `-maybe` formats.
+ */
+export const MAYBE_IMPORT = "import type { Maybe } from 'lite-fp';";
 
 const IDENTIFIER_RE = /^[a-zA-Z_$][a-zA-Z0-9_$]*$/;
+
+/**
+ * Check whether a {@link TypeFormat} emits `Maybe`-wrapped declarations.
+ *
+ * @param format - Format to test
+ * @returns True for 'asconst-maybe' and 'type-maybe'
+ */
+export function isMaybeFormat(format: TypeFormat | undefined): boolean {
+  return format === "asconst-maybe" || format === "type-maybe";
+}
 
 /**
  * Check whether a value is a valid TypeScript identifier.
@@ -187,6 +203,80 @@ export function generateInterfaceFromArray(
 }
 
 /**
+ * Convert an array of primitives to a constant annotated as a lite-fp `Maybe`.
+ *
+ * Emits an explicit readonly annotation — contextual typing preserves the
+ * literal types, so no `as const` assertion is needed. Every item must be a
+ * string or number; anything else fails (annotation requires type syntax).
+ *
+ * @param data - Non-empty array of primitive values
+ * @param variableName - Name for the generated constant
+ * @returns Result with the Maybe-annotated const code, or a GenerationError
+ *
+ * @example
+ * ```typescript
+ * const result = generateAsConstMaybeFromArray(['BNB', 'BTC'], 'Token');
+ * // Done:
+ * // export const Token: Maybe<{
+ * //   readonly BNB: 'BNB';
+ * //   readonly BTC: 'BTC';
+ * // }> = {
+ * //   BNB: 'BNB',
+ * //   BTC: 'BTC',
+ * // };
+ * ```
+ */
+export function generateAsConstMaybeFromArray(
+  data: unknown,
+  variableName: string,
+): Result<string, GenerationError> {
+  return Result.flatMap(
+    Result.zip(validateName(variableName), requireNonEmptyArray(data)),
+    ([name, items]) =>
+      Result.map(
+        requirePrimitiveArray(items, "asconst-maybe"),
+        (primitives) => {
+          const fields = primitives.map(maybeField);
+          const annotation = fields
+            .map((field) => `  readonly ${field.key}: ${field.lit};`)
+            .join("\n");
+          const value = fields
+            .map((field) => `  ${field.key}: ${field.lit}`)
+            .join(",\n");
+          return `export const ${name}: Maybe<{\n${annotation}\n}> = {\n${value}\n};`;
+        },
+      ),
+  );
+}
+
+/**
+ * Convert an array of primitives to a union type wrapped in lite-fp's `Maybe`.
+ *
+ * @param data - Non-empty array of primitive values
+ * @param typeName - Name for the generated type
+ * @returns Result with the Maybe-wrapped union code, or a GenerationError
+ *
+ * @example
+ * ```typescript
+ * const result = generateTypeMaybeFromArray(['BTCUSDT', 'ETHUSDT'], 'Symbol');
+ * // Done: export type Symbol = Maybe<'BTCUSDT' | 'ETHUSDT'>;
+ * ```
+ */
+export function generateTypeMaybeFromArray(
+  data: unknown,
+  typeName: string,
+): Result<string, GenerationError> {
+  return Result.flatMap(
+    Result.zip(validateName(typeName), requireNonEmptyArray(data)),
+    ([name, items]) =>
+      Result.map(requirePrimitiveArray(items, "type-maybe"), (primitives) => {
+        const union = primitives.map(literal).join(" | ");
+        return `export type ${name} = Maybe<${union}>;`;
+      }),
+  );
+}
+
+/**
  * Build `KEY = VALUE` enum entry lines from primitive values.
  *
  * @param items - Filtered string/number items
@@ -214,6 +304,61 @@ function literal(item: string | number): string {
 }
 
 /**
+ * Require every item to be a string or a number.
+ *
+ * Unlike enum/type filtering, one invalid item fails the whole operation:
+ * `-maybe` formats need valid type syntax for every entry.
+ *
+ * @param items - Array items to check
+ * @param format - Format reported in the failure
+ * @returns Done(primitives) or Fail(no-valid-items)
+ */
+function requirePrimitiveArray(
+  items: unknown[],
+  format: TypeFormat,
+): Result<(string | number)[], GenerationError> {
+  const isPrimitive = (item: unknown): item is string | number =>
+    typeof item === "string" || typeof item === "number";
+  return items.every(isPrimitive)
+    ? done(items)
+    : fail({ $: "no-valid-items", format });
+}
+
+/**
+ * Derive the property key for an array item.
+ *
+ * Valid identifier strings keep their value as key; other strings use
+ * ITEM_<index>; numbers use VALUE_<n>; anything else uses ITEM_<index>.
+ *
+ * @param item - Any value from the source array
+ * @param index - Position of the item in the source array
+ * @returns The derived property key
+ */
+function keyFor(item: unknown, index: number): string {
+  if (typeof item === "string") {
+    return isValidIdentifier(item) ? item : `ITEM_${index}`;
+  }
+  if (typeof item === "number") {
+    return `VALUE_${item}`;
+  }
+  return `ITEM_${index}`;
+}
+
+/**
+ * Build one annotation/value field pair for a primitive item.
+ *
+ * @param item - String or number value
+ * @param index - Position of the item in the source array
+ * @returns Key and literal text shared by annotation and initializer
+ */
+function maybeField(
+  item: string | number,
+  index: number,
+): { key: string; lit: string } {
+  return { key: keyFor(item, index), lit: literal(item) };
+}
+
+/**
  * Render an item as a `key: value` property fragment (no semicolon).
  *
  * @param item - Any value from the source array
@@ -222,8 +367,7 @@ function literal(item: string | number): string {
  */
 function property(item: unknown, index: number): string {
   if (typeof item === "string") {
-    const key = isValidIdentifier(item) ? item : `ITEM_${index}`;
-    return `  ${key}: ${literal(item)}`;
+    return `  ${keyFor(item, index)}: ${literal(item)}`;
   }
   if (typeof item === "number") {
     return `  VALUE_${item}: ${item}`;

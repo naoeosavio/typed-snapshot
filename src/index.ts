@@ -22,10 +22,14 @@ export {
 export {
   emitTypedConst,
   generateAsConstFromArray,
+  generateAsConstMaybeFromArray,
   generateEnumFromArray,
   generateInterfaceFromArray,
   generateTypeFromArray,
+  generateTypeMaybeFromArray,
+  isMaybeFormat,
   isValidIdentifier,
+  MAYBE_IMPORT,
 } from "./generators";
 export type { TypeFormat, WriteTypedVariableOptions } from "./types";
 export { generateContent, writeTypedVariableToFile } from "./writer";

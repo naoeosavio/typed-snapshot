@@ -8,13 +8,17 @@ import type { GenerationError, SnapshotError } from "./errors";
 import {
   emitTypedConst,
   generateAsConstFromArray,
+  generateAsConstMaybeFromArray,
   generateEnumFromArray,
   generateInterfaceFromArray,
   generateTypeFromArray,
+  generateTypeMaybeFromArray,
+  isMaybeFormat,
   isValidIdentifier,
+  MAYBE_IMPORT,
   validateName,
 } from "./generators";
-import type { WriteTypedVariableOptions } from "./types";
+import type { TypeFormat, WriteTypedVariableOptions } from "./types";
 
 /**
  * Generate the complete TypeScript file content (pure, no IO).
@@ -32,6 +36,10 @@ export function generateContent(
   }
 
   pushImportLine(parts, options);
+
+  if (isMaybeFormat(options.typeFormat)) {
+    parts.push(MAYBE_IMPORT);
+  }
 
   const body =
     options.typeFormat === "plain"
@@ -142,6 +150,10 @@ function generateArrayBody(
       return generateAsConstFromArray(options.data, options.variableName);
     case "interface":
       return generateInterfaceFromArray(options.data, options.variableName);
+    case "asconst-maybe":
+      return generateAsConstMaybeFromArray(options.data, options.variableName);
+    case "type-maybe":
+      return generateTypeMaybeFromArray(options.data, options.variableName);
     default:
       return generateEnumFromArray(options.data, options.variableName);
   }
