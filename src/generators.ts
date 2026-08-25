@@ -8,6 +8,11 @@ import type { TypeFormat } from "./types";
  */
 export const MAYBE_IMPORT = "import type { Maybe } from 'lite-fp';";
 
+/**
+ * Import header required by files generated in the `asconst-just` format.
+ */
+export const JUST_IMPORT = "import { just } from 'lite-fp';";
+
 const IDENTIFIER_RE = /^[a-zA-Z_$][a-zA-Z0-9_$]*$/;
 
 /**
@@ -18,6 +23,16 @@ const IDENTIFIER_RE = /^[a-zA-Z_$][a-zA-Z0-9_$]*$/;
  */
 export function isMaybeFormat(format: TypeFormat | undefined): boolean {
   return format === "asconst-maybe" || format === "type-maybe";
+}
+
+/**
+ * Check whether a {@link TypeFormat} emits `just(...)`-wrapped values.
+ *
+ * @param format - Format to test
+ * @returns True for 'asconst-just'
+ */
+export function isJustFormat(format: TypeFormat | undefined): boolean {
+  return format === "asconst-just";
 }
 
 /**
@@ -246,6 +261,43 @@ export function generateAsConstMaybeFromArray(
           return `export const ${name}: Maybe<{\n${annotation}\n}> = {\n${value}\n};`;
         },
       ),
+  );
+}
+
+/**
+ * Convert an array of primitives to a constant wrapped in lite-fp's `just`.
+ *
+ * The `as const` assertion keeps literal types (there is no annotation to
+ * provide contextual typing). Every item must be a string or number; anything
+ * else fails. The generated file imports `just` from 'lite-fp' at runtime.
+ *
+ * @param data - Non-empty array of primitive values
+ * @param variableName - Name for the generated constant
+ * @returns Result with the just-wrapped const code, or a GenerationError
+ *
+ * @example
+ * ```typescript
+ * const result = generateAsConstJustFromArray(['BNB', 'BTC'], 'Token');
+ * // Done:
+ * // export const Token = just({
+ * //   BNB: 'BNB',
+ * //   BTC: 'BTC',
+ * // } as const);
+ * ```
+ */
+export function generateAsConstJustFromArray(
+  data: unknown,
+  variableName: string,
+): Result<string, GenerationError> {
+  return Result.flatMap(
+    Result.zip(validateName(variableName), requireNonEmptyArray(data)),
+    ([name, items]) =>
+      Result.map(requirePrimitiveArray(items, "asconst-just"), (primitives) => {
+        const value = primitives
+          .map((item, index) => `  ${keyFor(item, index)}: ${literal(item)}`)
+          .join(",\n");
+        return `export const ${name} = just({\n${value}\n} as const);`;
+      }),
   );
 }
 

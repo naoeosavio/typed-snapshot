@@ -5,7 +5,8 @@ export type TypeFormat =
   | "asconst"
   | "interface"
   | "asconst-maybe"
-  | "type-maybe";
+  | "type-maybe"
+  | "asconst-just";
 
 export type WriteTypedVariableOptions = {
   /** TypeScript type to assign to the exported constant (e.g. "MyType" or "string") */

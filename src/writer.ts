@@ -8,13 +8,16 @@ import type { GenerationError, SnapshotError } from "./errors";
 import {
   emitTypedConst,
   generateAsConstFromArray,
+  generateAsConstJustFromArray,
   generateAsConstMaybeFromArray,
   generateEnumFromArray,
   generateInterfaceFromArray,
   generateTypeFromArray,
   generateTypeMaybeFromArray,
+  isJustFormat,
   isMaybeFormat,
   isValidIdentifier,
+  JUST_IMPORT,
   MAYBE_IMPORT,
   validateName,
 } from "./generators";
@@ -39,6 +42,10 @@ export function generateContent(
 
   if (isMaybeFormat(options.typeFormat)) {
     parts.push(MAYBE_IMPORT);
+  }
+
+  if (isJustFormat(options.typeFormat)) {
+    parts.push(JUST_IMPORT);
   }
 
   const body =
@@ -154,6 +161,8 @@ function generateArrayBody(
       return generateAsConstMaybeFromArray(options.data, options.variableName);
     case "type-maybe":
       return generateTypeMaybeFromArray(options.data, options.variableName);
+    case "asconst-just":
+      return generateAsConstJustFromArray(options.data, options.variableName);
     default:
       return generateEnumFromArray(options.data, options.variableName);
   }
