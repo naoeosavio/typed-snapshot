@@ -1,18 +1,19 @@
-import { just, some } from "lite-fp";
 import {
   Result,
   describeSnapshotError,
   generateAsConstFromArray,
+  generateAsConstMaybeFromArray,
   generateEnumFromArray,
   generateInterfaceFromArray,
   generateTypeFromArray,
+  generateTypeMaybeFromArray,
 } from "../dist/index.js";
 
 const show = (label, result) => {
   console.log(`${label}:`);
   Result.match(result, {
     done: (code) => console.log(code),
-    fail: (error) => console.error(`FALHOU [${error.kind}] ${describeSnapshotError(error)}`),
+    fail: (error) => console.error(`FALHOU [${error.$}] ${describeSnapshotError(error)}`),
   });
   console.log();
 };
@@ -42,5 +43,15 @@ console.log("Teste 4 - Casos de falha:");
 show("array vazio", generateAsConstFromArray([], "Empty"));
 show("não-array", generateEnumFromArray("nope", "NotArray"));
 show("nome inválido", generateTypeFromArray(["A"], "1nvalid Name"));
+
+console.log("Teste 5 - Maybe (asconst-maybe e type-maybe):");
+show("asconst-maybe tokens", generateAsConstMaybeFromArray(tokens, "Token"));
+show("type-maybe symbols", generateTypeMaybeFromArray(["BTCUSDT", "ETHUSDT"], "Symbol"));
+show("asconst-maybe números", generateAsConstMaybeFromArray(numbers, "Numbers"));
+show(
+  "asconst-maybe falha c/ objeto",
+  generateAsConstMaybeFromArray(["OK", { bad: true }], "Mixed"),
+);
+show("type-maybe falha c/ null", generateTypeMaybeFromArray(["A", null], "WithNull"));
 
 

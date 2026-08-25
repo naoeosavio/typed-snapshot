@@ -77,6 +77,49 @@ generateInterfaceFromArray(['BNB', 'BTC', 'USDT', 'ETH'], 'TokenData');
 // Done: export interface TokenData { BNB: 'BNB'; BTC: 'BTC'; USDT: 'USDT'; ETH: 'ETH'; }
 ```
 
+### Arrays → Maybe-wrapped const (`asconst-maybe`)
+
+Annotates the constant with lite-fp's `Maybe<T>` (`T | null | undefined`) and an
+explicit `readonly` shape — contextual typing keeps literal types, so no
+`as const` assertion is emitted. The generated file imports `Maybe` from
+`lite-fp` automatically.
+
+```ts
+generateAsConstMaybeFromArray(['BNB', 'BTC'], 'Token');
+```
+```typescript
+import type { Maybe } from 'lite-fp';
+
+export const Token: Maybe<{
+  readonly BNB: 'BNB';
+  readonly BTC: 'BTC';
+}> = {
+  BNB: 'BNB',
+  BTC: 'BTC',
+};
+```
+
+Consumers handle absence explicitly:
+
+```ts
+import { Maybe } from 'lite-fp';
+import { Token } from './data/Token';
+
+const names = Maybe.map(Token, (t) => Object.keys(t)); // Maybe<string[]>
+```
+
+### Arrays → Maybe-wrapped union (`type-maybe`)
+
+```ts
+generateTypeMaybeFromArray(['BTCUSDT', 'ETHUSDT'], 'Symbol');
+// Done:
+// import type { Maybe } from 'lite-fp';
+// export type Symbol = Maybe<'BTCUSDT' | 'ETHUSDT'>;
+```
+
+Both `-maybe` formats require every item to be a string or number — any other
+value returns `Fail({ $: 'no-valid-items' })`.
+
 ### Composing generation with writing
 
 Because generators are pure and return `Result`, you can build a pipeline that
@@ -110,24 +153,28 @@ const file = Result.flatMap(
   - `outputPath`: string — file path to write
   - `importPath?`, `importTypeName?` — optional `import type` header (emitted only when both are set)
   - `includeTimestamp?` (default true)
-  - `typeFormat?`: `'plain' | 'enum' | 'type' | 'asconst' | 'interface'`
+  - `typeFormat?`: `'plain' | 'enum' | 'type' | 'asconst' | 'interface' | 'asconst-maybe' | 'type-maybe'`
 - `generateEnumFromArray(data, enumName): Result<string, GenerationError>`
 - `generateTypeFromArray(data, typeName): Result<string, GenerationError>`
 - `generateAsConstFromArray(data, variableName): Result<string, GenerationError>`
 - `generateInterfaceFromArray(data, interfaceName): Result<string, GenerationError>`
+- `generateAsConstMaybeFromArray(data, variableName): Result<string, GenerationError>`
+- `generateTypeMaybeFromArray(data, typeName): Result<string, GenerationError>`
 - `generateContent(options): Result<string, GenerationError>` — pure file body builder
 - `describeSnapshotError(error): string` — human-readable message for any error
 - `isValidIdentifier(value)` / `emitTypedConst(name, type, value)` — low-level helpers
 
 `Result`, `done`, `fail`, `Done` and `Fail` are re-exported from `lite-fp` for convenience.
 
-### Error kinds
+### Error tags
 
-| kind                  | meaning                                              |
+Errors are tagged unions — branch on `error.$`:
+
+| `$`                   | meaning                                              |
 | --------------------- | ---------------------------------------------------- |
 | `not-array`           | data was not an array (extra field: `received`)       |
 | `empty-data`          | data array was empty                                  |
-| `no-valid-items`      | no valid items remained after filtering (enum/type)   |
+| `no-valid-items`      | nothing usable remained (enum/type) or a non-primitive item was found (`-maybe` formats) |
 | `invalid-name`        | export name is not a TypeScript identifier            |
 | `invalid-output-path` | output path missing/blank                             |
 | `io`                  | filesystem write failed (original error under `cause`)|
@@ -135,9 +182,10 @@ const file = Result.flatMap(
 ## Notes
 
 - The library has a single runtime dependency: [`lite-fp`](https://www.npmjs.com/package/lite-fp). Build with `tsup`.
+- Files generated with `-maybe` formats import `Maybe` from `'lite-fp'` — keep the package resolvable from the generated files (it ships as a regular dependency, so npm/pnpm/yarn hoisting normally covers it).
 - Nothing throws: every failure mode above comes back as `Fail`.
 - For `enum` mode, string values must be valid TypeScript identifiers to become keys; numbers become `VALUE_<n>` keys; anything else is filtered out.
-- For `asconst` and `interface` modes:
+- For `asconst`, `interface`, and `asconst-maybe` modes:
   - String values that are valid TypeScript identifiers use the value as the property key
   - Invalid identifiers use `ITEM_${index}` as the property key
   - Number values use `VALUE_${number}` as the property key
@@ -157,7 +205,7 @@ Breaking changes:
 
 - await writeTypedVariableToFile({ ... });
 + const result = await writeTypedVariableToFile({ ... });
-+ Result.match(result, { done: () => {}, fail: (e) => console.error(e.kind) });
++ Result.match(result, { done: () => {}, fail: (e) => console.error(e.$) });
 ```
 
 ## Contributing
