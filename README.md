@@ -120,6 +120,24 @@ generateTypeMaybeFromArray(['BTCUSDT', 'ETHUSDT'], 'Symbol');
 Both `-maybe` formats require every item to be a string or number — any other
 value returns `Fail({ $: 'no-valid-items' })`.
 
+### Arrays → `just(...)` const (`asconst-just`)
+
+Wraps the object in lite-fp's runtime `just` constructor. The `as const`
+assertion keeps literal types, and the generated file imports `just` from
+`'lite-fp'` automatically (a value import, unlike the `-maybe` type import).
+
+```ts
+generateAsConstJustFromArray(['BNB', 'BTC'], 'Token');
+```
+```typescript
+import { just } from 'lite-fp';
+
+export const Token = just({
+  BNB: 'BNB',
+  BTC: 'BTC',
+} as const);
+```
+
 ### Composing generation with writing
 
 Because generators are pure and return `Result`, you can build a pipeline that
@@ -153,13 +171,14 @@ const file = Result.flatMap(
   - `outputPath`: string — file path to write
   - `importPath?`, `importTypeName?` — optional `import type` header (emitted only when both are set)
   - `includeTimestamp?` (default true)
-  - `typeFormat?`: `'plain' | 'enum' | 'type' | 'asconst' | 'interface' | 'asconst-maybe' | 'type-maybe'`
+  - `typeFormat?`: `'plain' | 'enum' | 'type' | 'asconst' | 'interface' | 'asconst-maybe' | 'type-maybe' | 'asconst-just'`
 - `generateEnumFromArray(data, enumName): Result<string, GenerationError>`
 - `generateTypeFromArray(data, typeName): Result<string, GenerationError>`
 - `generateAsConstFromArray(data, variableName): Result<string, GenerationError>`
 - `generateInterfaceFromArray(data, interfaceName): Result<string, GenerationError>`
 - `generateAsConstMaybeFromArray(data, variableName): Result<string, GenerationError>`
 - `generateTypeMaybeFromArray(data, typeName): Result<string, GenerationError>`
+- `generateAsConstJustFromArray(data, variableName): Result<string, GenerationError>`
 - `generateContent(options): Result<string, GenerationError>` — pure file body builder
 - `describeSnapshotError(error): string` — human-readable message for any error
 - `isValidIdentifier(value)` / `emitTypedConst(name, type, value)` — low-level helpers
@@ -182,7 +201,7 @@ Errors are tagged unions — branch on `error.$`:
 ## Notes
 
 - The library has a single runtime dependency: [`lite-fp`](https://www.npmjs.com/package/lite-fp). Build with `tsup`.
-- Files generated with `-maybe` formats import `Maybe` from `'lite-fp'` — keep the package resolvable from the generated files (it ships as a regular dependency, so npm/pnpm/yarn hoisting normally covers it).
+- Files generated with `-maybe` formats import `Maybe` from `'lite-fp'`, and `asconst-just` imports `just` — keep the package resolvable from the generated files (it ships as a regular dependency, so npm/pnpm/yarn hoisting normally covers it).
 - Nothing throws: every failure mode above comes back as `Fail`.
 - For `enum` mode, string values must be valid TypeScript identifiers to become keys; numbers become `VALUE_<n>` keys; anything else is filtered out.
 - For `asconst`, `interface`, and `asconst-maybe` modes:

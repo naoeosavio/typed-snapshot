@@ -2,6 +2,7 @@ import {
   Result,
   describeSnapshotError,
   generateAsConstFromArray,
+  generateAsConstJustFromArray,
   generateAsConstMaybeFromArray,
   generateEnumFromArray,
   generateInterfaceFromArray,
@@ -53,5 +54,9 @@ show(
   generateAsConstMaybeFromArray(["OK", { bad: true }], "Mixed"),
 );
 show("type-maybe falha c/ null", generateTypeMaybeFromArray(["A", null], "WithNull"));
+
+console.log("Teste 6 - asconst-just:");
+show("asconst-just tokens", generateAsConstJustFromArray(["BNB", "BTC"], "Token"));
+show("asconst-just falha c/ objeto", generateAsConstJustFromArray(["OK", 1], "Fine") && generateAsConstJustFromArray([{ bad: true }], "Mixed"));
 
 
